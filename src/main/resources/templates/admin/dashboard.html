@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/admin_layout :: admin-head('Dashboard')}"></head>
+<body>
+    <div th:replace="~{fragments/admin_layout :: admin-sidebar('dashboard')}"></div>
+
+    <div class="content">
+        <!-- Top Bar Limpio con opción de Cambio de Clave -->
+        <div class="top-bar shadow-sm d-flex align-items-center justify-content-between px-3 py-2 bg-white rounded mb-4">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-light border-0 rounded-3 me-2" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <h6 class="mb-0 fw-bold">Dashboard Admin</h6>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCambiarPasswordAdmin">
+                    <i class="fas fa-key me-1"></i> Cambiar Clave
+                </button>
+                <span class="text-muted small ms-2">
+                    <i class="fas fa-hotel me-1 text-primary"></i> Hotel Konford
+                </span>
+            </div>
+        </div>
+
+        <!-- Módulo Principal Destacado: Marcación por Documento (Hero Card) -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 text-white position-relative overflow-hidden" 
+             style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 30px;">
+            <i class="fas fa-id-card position-absolute" 
+               style="right: -20px; bottom: -20px; font-size: 10rem; opacity: 0.08; pointer-events: none;"></i>
+            
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-3 mb-lg-0">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill me-2 fw-semibold">
+                            <i class="fas fa-user-check me-1"></i> Control de Asistencia
+                        </span>
+                        <small class="text-white-50">Marcación autorizada (DNI / C.E. / Pasaporte)</small>
+                    </div>
+                    <h3 class="fw-bold mb-1">Registro de Asistencia</h3>
+                    <p class="text-white-50 mb-0 small">Ingrese el número de documento del trabajador para registrar su entrada o salida.</p>
+                </div>
+
+                <div class="col-lg-6">
+                    <form th:action="@{/admin/asistencias/marcar-dni}" method="post" class="needs-validation">
+                        <div class="bg-white bg-opacity-10 p-2 rounded-4 border border-white border-opacity-10 shadow-lg">
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent border-0 text-white-50 ps-3">
+                                    <i class="fas fa-address-card fa-lg"></i>
+                                </span>
+                                <input type="text" 
+                                       name="dni" 
+                                       class="form-control form-control-lg border-0 bg-transparent text-white fw-bold shadow-none custom-placeholder" 
+                                       placeholder="Ingrese N° de Documento..." 
+                                       maxlength="12" 
+                                       required 
+                                       pattern="[A-Za-z0-9]{8,12}"
+                                       style="letter-spacing: 2px; color: #ffffff !important;">
+                                <button class="btn btn-primary btn-lg px-4 rounded-3 fw-bold shadow-sm" type="submit">
+                                    <i class="fas fa-check-circle me-2"></i> Marcar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertas de Marcación o Cambio de Clave -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
+            <i class="fas fa-check-circle me-2"></i><span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i><span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="row g-4 mb-4 px-2">
+            <div class="col-md-3 col-6">
+                <div class="stat-card" style="background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);">
+                    <i class="fas fa-users" style="position: absolute; right: -10px; bottom: -10px; font-size: 4rem; opacity: 0.2;"></i>
+                    <small class="opacity-75 fw-medium">Personal</small>
+                    <h2 class="fw-bold mb-0" th:text="${totalEmpleados}">0</h2>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <i class="fas fa-user-check" style="position: absolute; right: -10px; bottom: -10px; font-size: 4rem; opacity: 0.2;"></i>
+                    <small class="opacity-75 fw-medium">Presentes</small>
+                    <h2 class="fw-bold mb-0" th:text="${presentes}">0</h2>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                    <i class="fas fa-user-clock" style="position: absolute; right: -10px; bottom: -10px; font-size: 4rem; opacity: 0.2;"></i>
+                    <small class="opacity-75 fw-medium">Tardanzas</small>
+                    <h2 class="fw-bold mb-0" th:text="${tardanzas}">0</h2>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card" style="background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);">
+                    <i class="fas fa-user-times" style="position: absolute; right: -10px; bottom: -10px; font-size: 4rem; opacity: 0.2;"></i>
+                    <small class="opacity-75 fw-medium">Faltas</small>
+                    <h2 class="fw-bold mb-0" th:text="${faltas}">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card card-custom p-4 border-0">
+                    <h5 class="fw-bold mb-4">Actividad Reciente</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Empleado</th>
+                                    <th>Entrada</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="a : ${ultimasAsistencias}">
+                                    <td>
+                                        <span class="fw-bold d-block" th:text="${a.empleado.nombres + ' ' + a.empleado.apellidos}"></span>
+                                        <small class="text-muted" th:text="${a.empleado.cargo}"></small>
+                                    </td>
+                                    <td th:text="${a.horaIngreso != null ? #temporals.format(a.horaIngreso, 'hh:mm:ss a') : '---'}"></td>
+                                    <td>
+                                        <span th:class="${a.estado == 'PUNTUAL' ? 'badge bg-success-subtle text-success px-3 py-2 rounded-pill' :
+                                                          (a.estado == 'TARDANZA' ? 'badge bg-warning-subtle text-warning px-3 py-2 rounded-pill' :
+                                                          'badge bg-danger-subtle text-danger px-3 py-2 rounded-pill')}"
+                                              th:text="${a.estado == 'FUERA_DE_TURNO' ? 'Fuera de Turno' : a.estado}">
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card card-custom p-4 border-0">
+                    <h5 class="fw-bold mb-4 text-danger"><i class="fas fa-bell me-2"></i> Notificaciones</h5>
+                    <div th:if="${#lists.isEmpty(alertas)}" class="text-center py-5 opacity-25">
+                        <i class="fas fa-check-double fa-3x mb-2"></i>
+                        <p>Sin alertas hoy</p>
+                    </div>
+                    <div th:each="alerta : ${alertas}" class="alert-item" style="border-left: 4px solid #f43f5e; background: #fff1f2; padding: 12px; border-radius: 12px; margin-bottom: 8px;">
+                        <span class="small fw-medium" th:text="${alerta}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cambiar Contraseña del Admin -->
+    <div class="modal fade" id="modalCambiarPasswordAdmin" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form th:action="@{/admin/cambiar-password}" method="post" class="modal-content border-0 shadow-lg" style="border-radius: 25px;">
+                <div class="modal-header border-0 px-4 pt-4">
+                    <h5 class="modal-title fw-bold text-dark"><i class="fas fa-lock text-primary me-2"></i>Cambiar Mi Contraseña</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-start">
+                    <p class="small text-muted mb-3">Ingrese la nueva contraseña de acceso para la cuenta de Administración.</p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted mb-1">NUEVA CONTRASEÑA</label>
+                        <div class="position-relative">
+                            <input type="password" name="newPassword" id="adminNewPassword" 
+                                   class="form-control bg-light border-0 py-3" 
+                                   placeholder="Mínimo 6 caracteres" 
+                                   required style="border-radius: 12px; padding-right: 50px;">
+                            <button type="button" class="btn border-0 bg-transparent position-absolute top-50 end-0 translate-middle-y me-2 p-0"
+                                    style="z-index: 10;" onclick="toggleAdminPasswordVisibility()">
+                                <i class="fas fa-eye text-muted" id="adminEyeIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow" style="border-radius: 15px;">
+                        Guardar Nueva Contraseña
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/admin_layout :: admin-scripts}"></div>
+    
+    <script>
+        function toggleAdminPasswordVisibility() {
+            const input = document.getElementById('adminNewPassword');
+            const icon = document.getElementById('adminEyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+    </script>
+</body>
+</html>

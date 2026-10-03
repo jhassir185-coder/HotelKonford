@@ -1,0 +1,12 @@
+   CREDENCIALES - HOTEL KONFORD
+ADMINISTRADOR (Acceso Panel Jefa)
+---------------------------------
+DNI: 74581236
+Password: 123456
+
+TRABAJADOR (Acceso Panel Empleado)
+----------------------------------
+DNI: 12345678
+Password: 123456
+
+URL Local: http://localhost:8080

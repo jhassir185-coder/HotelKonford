@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="[http://www.thymeleaf.org](http://www.thymeleaf.org)">
+<head th:replace="~{fragments/admin_layout :: admin-head('Reportes')}"></head>
+<body>
+    <!-- Estilos especiales para que la impresión en PDF solo muestre la tabla limpia -->
+    <style>
+        @media print {
+            .sidebar, .top-bar, .no-print, button, a.btn, form {
+                display: none !important;
+            }
+            .content {
+                margin-left: 0 !important;
+                padding: 0 !important;
+            }
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .table-responsive {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            .table {
+                width: 100% !important;
+            }
+        }
+
+        /* Ajuste visual para listas largas sin romper el diseño */
+        .table-responsive-custom {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .table-responsive-custom thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 1;
+        }
+    </style>
+
+    <div th:replace="~{fragments/admin_layout :: admin-sidebar('asistencias')}"></div>
+    <div class="content">
+        <div class="top-bar shadow-sm no-print">
+            <button class="btn btn-light border-0 rounded-3" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+            <h6 class="mb-0 ms-3 fw-bold">Reportes Hotel</h6>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4 px-2 no-print">
+            <div>
+                <h3 class="fw-bold d-none d-lg-block mb-0">Control de Asistencia</h3>
+                <!-- Badge de filtro activo y contador de registros -->
+                <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
+                    <span th:if="${empleadoFiltro != null}" class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">
+                        <i class="fas fa-filter me-1"></i>
+                        Filtrando: <span th:text="${empleadoFiltro.nombreCompleto}"></span>
+                    </span>
+                    <a th:if="${empleadoFiltro != null}" href="/admin/asistencias" class="btn btn-sm btn-link text-muted p-0 me-2">
+                        <i class="fas fa-times-circle"></i> Quitar filtro
+                    </a>
+                    <span class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill">
+                        Total de registros: <strong th:text="${#lists.size(asistencias)}">0</strong>
+                    </span>
+                </div>
+            </div>
+            
+            <div class="d-flex gap-2">
+                <a th:if="${empleadoFiltro != null}" href="/admin/empleados" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm">
+                    <i class="fas fa-arrow-left me-2"></i> Volver a Empleados
+                </a>
+                
+                <!-- Botón de Exportar a Excel Real Corregido -->
+                <a th:href="@{/admin/asistencias/exportar-excel(empleadoId=${empleadoFiltro != null ? empleadoFiltro.id : ''}, fechaInicio=${fechaInicio != null ? fechaInicio : ''}, fechaFin=${fechaFin != null ? fechaFin : ''})}" 
+                   class="btn btn-success rounded-pill px-4 shadow-sm text-white fw-bold">
+                    <i class="fas fa-file-excel me-2"></i> Exportar Excel
+                </a>
+
+                <button class="btn btn-outline-primary rounded-pill px-4 shadow-sm" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i> Generar PDF/Imprimir
+                </button>
+                <button class="btn btn-outline-danger rounded-pill px-4 shadow-sm" onclick="confirmarEliminar()">
+                    <i class="fas fa-trash-alt me-2"></i> Eliminar Historial
+                </button>
+            </div>
+        </div>
+
+        <!-- Encabezado exclusivo para cuando se genera la Impresión / PDF -->
+        <div class="d-none d-print-block mb-4 text-center">
+            <h2 class="fw-bold">Hotel Konford - Reporte Oficial de Asistencia</h2>
+            <p class="text-muted" th:if="${empleadoFiltro != null}">Empleado: <strong th:text="${empleadoFiltro.nombreCompleto}"></strong> (Doc: <span th:text="${empleadoFiltro.dni}"></span>)</p>
+            <p class="text-muted" th:if="${fechaInicio != null and fechaFin != null}">Período: <span th:text="${fechaInicio}"></span> al <span th:text="${fechaFin}"></span></p>
+            <hr>
+        </div>
+
+        <!-- Filtro por Rango de Fechas -->
+        <div class="card card-custom p-3 mb-4 border-0 shadow-sm no-print">
+            <form th:action="${empleadoFiltro != null ? '/admin/asistencias/empleado/' + empleadoFiltro.id : '/admin/asistencias'}" method="get" class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted mb-1">FECHA INICIO</label>
+                    <input type="date" name="fechaInicio" th:value="${fechaInicio}" class="form-control bg-light border-0" style="border-radius: 10px;">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted mb-1">FECHA FIN</label>
+                    <input type="date" name="fechaFin" th:value="${fechaFin}" class="form-control bg-light border-0" style="border-radius: 10px;">
+                </div>
+                <div class="col-md-4 d-flex align-items-end gap-2" style="margin-top: auto;">
+                    <button type="submit" class="btn btn-primary w-100 fw-bold" style="border-radius: 10px; padding: 10px;">
+                        <i class="fas fa-filter me-1"></i> Filtrar Fechas
+                    </button>
+                    <a th:href="${empleadoFiltro != null ? '/admin/asistencias/empleado/' + empleadoFiltro.id : '/admin/asistencias'}" 
+                       class="btn btn-light border w-50" style="border-radius: 10px; padding: 10px;">
+                        Limpiar
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Formulario oculto que hace el POST -->
+        <form id="formEliminarHistorial" th:action="@{/admin/asistencias/eliminar-historial}" method="post" class="d-none"></form>
+
+        <div class="card card-custom p-4">
+            <div class="table-responsive table-responsive-custom">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Empleado</th>
+                            <th>Entrada</th>
+                            <th>Salida</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="a : ${asistencias}">
+                            <td th:text="${a.fecha}" class="small fw-semibold"></td>
+                            <td>
+                                <span class="fw-bold d-block" th:text="${a.empleado.nombreCompleto}"></span>
+                                <small class="text-muted" th:text="${a.empleado.dni}"></small>
+                            </td>
+                            <td th:text="${a.horaIngreso != null ? #temporals.format(a.horaIngreso, 'hh:mm:ss a') : '---'}"></td>
+                            <td th:text="${a.horaSalida != null ? #temporals.format(a.horaSalida, 'hh:mm:ss a') : '---'}"></td>
+                            <td>
+                                <span th:if="${a.estado == 'PUNTUAL'}" class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold">
+                                    <i class="fas fa-check-circle me-1"></i> PUNTUAL
+                                </span>
+                                <span th:if="${a.estado == 'TARDANZA'}" class="badge bg-warning-subtle text-warning px-3 py-2 rounded-pill fw-bold">
+                                    <i class="fas fa-clock me-1"></i> TARDANZA (<span th:text="${a.minutosTardanza}"></span> min)
+                                </span>
+                                <span th:if="${a.estado == 'FUERA_DE_TURNO'}" class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill fw-bold">
+                                    <i class="fas fa-exclamation-triangle me-1"></i> Fuera de Turno
+                                </span>
+                                <span th:if="${a.estado != 'PUNTUAL' and a.estado != 'TARDANZA' and a.estado != 'FUERA_DE_TURNO'}" 
+                                      class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill fw-bold" th:text="${a.estado}">
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/admin_layout :: admin-scripts}"></div>
+    <script>
+        function confirmarEliminar() {
+            if (confirm('¿Estás seguro de eliminar TODO el historial de asistencias? Esta acción no se puede deshacer.')) {
+                document.getElementById('formEliminarHistorial').submit();
+            }
+        }
+    </script>    
+</body>
+</html>

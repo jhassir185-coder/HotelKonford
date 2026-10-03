@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{fragments/admin_layout :: admin-head('Personal')}"></head>
+    <body>
+        <div th:replace="~{fragments/admin_layout :: admin-sidebar('empleados')}"></div>
+
+        <div class="content">
+            <div class="top-bar shadow-sm">
+                <button class="btn btn-light border-0 rounded-3" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <h6 class="mb-0 ms-3 fw-bold">Personal Hotel</h6>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+                <h3 class="fw-bold d-none d-lg-block">Gestión de Empleados</h3>
+                <button class="btn btn-primary rounded-pill px-4 shadow" onclick="abrirNuevo()">
+                    <i class="fas fa-plus me-2"></i> Nuevo Registro
+                </button>
+            </div>
+
+            <div th:if="${error}" class="alert alert-danger mx-2 rounded-3" th:text="${error}"></div>
+            <div th:if="${success}" class="alert alert-success mx-2 rounded-3" th:text="${success}"></div> 
+
+            <div class="card card-custom p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Empleado</th>
+                                <th>Documento</th>
+                                <th>Cargo / Área</th>
+                                <th>Turno</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="emp : ${empleados}">
+                                <td>
+                                    <span class="fw-bold d-block" th:text="${emp.nombreCompleto}"></span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary-subtle text-secondary fw-semibold mb-1" 
+                                          th:text="${emp.tipoDocumento == 'CARNE_EXTRANJERIA' ? 'C.E.' : (emp.tipoDocumento == 'PASAPORTE' ? 'PASAPORTE' : 'DNI')}">DNI</span>
+                                    <small class="text-muted d-block" th:text="${emp.dni}"></small>
+                                </td>
+                                <td>
+                                    <span th:text="${emp.cargo}" class="badge bg-primary-subtle text-primary mb-1 d-block" style="width: fit-content;"></span>
+                                    <small th:text="${emp.area}" class="text-muted"></small>
+                                </td>
+                                <td>
+                                    <span class="text-dark fw-medium" th:text="${emp.horario != null ? emp.horario.nombre : 'No asignado'}"></span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/admin/asistencias/empleado/{id}(id=${emp.id})}" 
+                                       class="btn btn-sm btn-outline-success border-0 me-1" title="Ver Asistencia">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-primary border-0 me-1" 
+                                            th:data-id="${emp.id}"
+                                            th:data-tipo-doc="${emp.tipoDocumento}"
+                                            th:data-dni="${emp.dni}"
+                                            th:data-nombres="${emp.nombres}"
+                                            th:data-apellidos="${emp.apellidos}"
+                                            th:data-cargo="${emp.cargo}"
+                                            th:data-area="${emp.area}"
+                                            th:data-rol="${emp.rol}"
+                                            th:data-horario="${emp.horario != null ? emp.horario.id : ''}"
+                                            onclick="abrirEditar(this)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <a th:href="@{/admin/empleados/eliminar/{id}(id=${emp.id})}" class="btn btn-sm btn-outline-danger border-0">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Empleado -->
+        <div class="modal fade" id="modalEmpleado" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <form th:action="@{/admin/empleados/guardar}" id="formEmpleado" method="post" class="modal-content border-0 shadow-lg" style="border-radius: 30px;">
+                    <div class="modal-header border-0 px-4 pt-4">
+                        <h5 class="modal-title fw-bold" id="modalTitle">Nuevo Empleado</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <input type="hidden" name="id" id="empId">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">TIPO DOCUMENTO</label>
+                                <select name="tipoDocumento" id="empTipoDoc" class="form-select bg-light border-0 py-3" style="border-radius: 15px;" onchange="ajustarValidacionDocumento()">
+                                    <option value="DNI">DNI (Nacional)</option>
+                                    <option value="CARNE_EXTRANJERIA">Carné de Extranjería</option>
+                                    <option value="PASAPORTE">Pasaporte</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">NÚMERO DOC.</label>
+                                <input type="text" name="dni" id="empDni"
+                                       class="form-control bg-light border-0 py-3" 
+                                       placeholder="Nº Documento" 
+                                       required 
+                                       style="border-radius: 15px;">
+                            </div>                       
+                            <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">NOMBRES</label>
+                                <input type="text" name="nombres" 
+                                       class="form-control bg-light border-0 py-3" 
+                                       placeholder="Nombres" 
+                                       required
+                                       pattern="[A-Za-zÁÉÍÓÚÜáéíóúüÑñ\s]+"
+                                       title="Solo se permiten letras"
+                                       oninput="this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚÜáéíóúüÑñ\s]/g, '')"
+                                       style="border-radius: 15px;">
+                            </div>
+                            <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">APELLIDOS</label>
+                                <input type="text" name="apellidos" 
+                                       class="form-control bg-light border-0 py-3" 
+                                       placeholder="Apellidos" 
+                                       required
+                                       pattern="[A-Za-zÁÉÍÓÚÜáéíóúüÑñ\s]+"
+                                       title="Solo se permiten letras"
+                                       oninput="this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚÜáéíóúüÑñ\s]/g, '')"
+                                       style="border-radius: 15px;">
+                            </div>
+                            <div class="col-12">
+                                <label class="small fw-bold text-muted mb-1">TURNO ASIGNADO</label>
+                                <select name="horario" class="form-select bg-light border-0 py-3" style="border-radius: 15px;">
+                                    <option th:each="h : ${horarios}" th:value="${h.id}" th:text="${h.nombre}">Seleccionar Turno</option>
+                                </select>
+                            </div>
+
+                            <!-- Listas Desplegables para Cargo y Área (Tarea 4) -->
+                            <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">CARGO</label>
+                                <select name="cargo" id="empCargo" class="form-select bg-light border-0 py-3" style="border-radius: 15px;" required>
+                                    <option value="" disabled selected>Seleccione Cargo</option>
+                                    <option value="Recepcionista">Recepcionista</option>
+                                    <option value="Jefe de Recepción">Jefe de Recepción</option>
+                                    <option value="Personal de Housekeeping">Personal de Limpieza</option>
+                                    <option value="Técnico de Mantenimiento">Técnico de Mantenimiento</option>
+                                    <option value="Cocinero / Chef">Cocinero / Chef</option>
+                                    <option value="Mozo / Mesero">Mozo / Restaurante</option>
+                                    <option value="Agente de Seguridad">Seguridad</option>
+                                    <option value="Administrador General">Administrador General</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">ÁREA</label>
+                                <select name="area" id="empArea" class="form-select bg-light border-0 py-3" style="border-radius: 15px;" required>
+                                    <option value="" disabled selected>Seleccione Área</option>
+                                    <option value="Recepción">Recepción</option>
+                                    <option value="Limpieza y Housekeeping">Limpieza</option>
+                                    <option value="Mantenimiento">Mantenimiento</option>
+                                    <option value="Cocina y Restaurante">Restaurante y Cocina</option>
+                                    <option value="Seguridad">Seguridad</option>
+                                    <option value="Administración">Administración</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="small fw-bold text-muted mb-1">CONTRASEÑA</label>
+                                <div class="position-relative">
+                                    <input type="password" name="password" id="empPassword" 
+                                           class="form-control bg-light border-0 py-3" 
+                                           placeholder="Contraseña de Acceso" 
+                                           required 
+                                           style="border-radius: 15px; padding-right: 50px;">
+                                    <button type="button" id="togglePassword"
+                                            class="btn border-0 bg-transparent position-absolute top-50 end-0 translate-middle-y me-2 p-0"
+                                            style="z-index: 10;"
+                                            aria-label="Mostrar contraseña"
+                                            onclick="togglePasswordVisibility()">
+                                        <i class="fas fa-eye" id="eyeIcon" style="color: #6c757d; font-size: 1rem;"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted px-2" id="pwdHelp" style="font-size: 0.75rem;">Obligatoria para nuevos registros</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="small fw-bold text-muted mt-2">ROL DEL USUARIO</label>
+                                <select name="rol" class="form-select bg-light border-0 py-3" style="border-radius: 15px;">
+                                    <option value="TRABAJADOR">TRABAJADOR (Acceso limitado)</option>
+                                    <option value="ADMIN">ADMINISTRADOR (Acceso total)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-4 pt-0">
+                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow" style="border-radius: 15px;">Confirmar Registro</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div th:replace="~{fragments/admin_layout :: admin-scripts}"></div>
+
+        <script>
+            const modalEmpleado = new bootstrap.Modal(document.getElementById('modalEmpleado'));
+
+            function ajustarValidacionDocumento() {
+                const tipo = document.getElementById('empTipoDoc').value;
+                const inputDni = document.getElementById('empDni');
+
+                if (tipo === 'DNI') {
+                    inputDni.maxLength = 8;
+                    inputDni.placeholder = "8 dígitos numéricos";
+                    inputDni.oninput = function() { this.value = this.value.replace(/[^0-9]/g, ''); };
+                } else {
+                    inputDni.maxLength = 12;
+                    inputDni.placeholder = "Nº Documento alfanumérico";
+                    inputDni.oninput = function() { this.value = this.value.replace(/[^A-Za-z0-9]/g, ''); };
+                }
+            }
+
+            function abrirNuevo() {
+                document.getElementById('formEmpleado').reset();
+                document.getElementById('empId').value = '';
+                document.getElementById('modalTitle').innerText = 'Nuevo Empleado';
+                document.getElementById('empPassword').required = true;
+                document.getElementById('pwdHelp').innerText = 'Obligatoria para nuevos registros';
+                
+                document.getElementById('empCargo').selectedIndex = 0;
+                document.getElementById('empArea').selectedIndex = 0;
+
+                ajustarValidacionDocumento();
+                modalEmpleado.show();
+            }
+
+            function abrirEditar(btn) {
+                document.getElementById('formEmpleado').reset();
+
+                document.getElementById('empId').value = btn.getAttribute('data-id');
+                document.getElementById('modalTitle').innerText = 'Editar Empleado';
+
+                const tipoDoc = btn.getAttribute('data-tipo-doc') || 'DNI';
+                document.getElementById('empTipoDoc').value = tipoDoc;
+                ajustarValidacionDocumento();
+
+                document.getElementById('empDni').value = btn.getAttribute('data-dni');
+                document.querySelector('input[name="nombres"]').value = btn.getAttribute('data-nombres');
+                document.querySelector('input[name="apellidos"]').value = btn.getAttribute('data-apellidos');
+                
+                // Selección dinámica de Cargo y Área
+                const cargo = btn.getAttribute('data-cargo');
+                const area = btn.getAttribute('data-area');
+                if (cargo) document.getElementById('empCargo').value = cargo;
+                if (area) document.getElementById('empArea').value = area;
+
+                document.querySelector('select[name="rol"]').value = btn.getAttribute('data-rol');
+
+                const horarioId = btn.getAttribute('data-horario');
+                if (horarioId) {
+                    document.querySelector('select[name="horario"]').value = horarioId;
+                } else {
+                    document.querySelector('select[name="horario"]').selectedIndex = 0;
+                }
+
+                document.getElementById('empPassword').required = false;
+                document.getElementById('pwdHelp').innerText = 'Dejar en blanco para mantener la contraseña actual';
+
+                modalEmpleado.show();
+            }
+
+            function togglePasswordVisibility() {
+                const input = document.getElementById('empPassword');
+                const icon = document.getElementById('eyeIcon');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            }
+        </script>
+    </body>
+</html>

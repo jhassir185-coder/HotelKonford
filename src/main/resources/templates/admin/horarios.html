@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/admin_layout :: admin-head('Horarios')}"></head>
+<body>
+    <div th:replace="~{fragments/admin_layout :: admin-sidebar('horarios')}"></div>
+    <div class="content">
+        <div class="top-bar shadow-sm">
+            <button class="btn btn-light border-0 rounded-3" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+            <h6 class="mb-0 ms-3 fw-bold">Horarios Hotel</h6>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+            <h3 class="fw-bold d-none d-lg-block">Gestión de Horarios de Turno</h3>
+            <button class="btn btn-primary rounded-pill px-4 shadow" data-bs-toggle="modal" data-bs-target="#modalHorario">
+                <i class="fas fa-plus me-2"></i> Nuevo Horario
+            </button>
+        </div>
+        <div class="card card-custom p-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Horario / Turno</th>
+                            <th>Hora Entrada</th>
+                            <th>Hora Salida</th>
+                            <th class="text-center">Tolerancia</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="h : ${horarios}">
+                            <td class="fw-bold text-primary" th:text="${h.nombre}"></td>
+                            <td th:text="${h.horaEntrada}"></td>
+                            <td th:text="${h.horaSalida}"></td>
+                            <td class="text-center">
+                                <span class="badge bg-warning-subtle text-warning px-3 rounded-pill" th:text="${h.tolerancia + ' min'}"></span>
+                            </td>
+                            <td class="text-center">
+                                <form th:action="@{/admin/horarios/eliminar/{id}(id=${h.id})}" method="post" class="d-inline form-eliminar-horario">
+                                    <button type="submit" class="btn btn-sm btn-light text-danger rounded-circle border-0" title="Eliminar Horario">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Horario -->
+    <div class="modal fade" id="modalHorario" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form th:action="@{/admin/horarios/guardar}" method="post" class="modal-content border-0 shadow-lg" style="border-radius: 30px;">
+                <div class="modal-header border-0 px-4 pt-4">
+                    <h5 class="modal-title fw-bold">Nuevo Horario de Turno</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <!-- Desplegable predefinido para nombre del turno (Tarea 6) -->
+                        <div class="col-12">
+                            <label class="small fw-bold text-muted mb-1">TIPO DE HORARIO / TURNO</label>
+                            <select name="nombre" id="selectNombreHorario" class="form-select bg-light border-0 py-3" style="border-radius: 15px;" required onchange="autocompletarHoras()">
+                                <option value="" disabled selected>Seleccione un Horario Predefinido</option>
+                                <option value="Turno Mañana (07:00 am - 03:00 pm)">Turno Mañana (07:00 am - 03:00 pm)</option>
+                                <option value="Turno Tarde (03:00 pm - 11:00 pm)">Turno Tarde (03:00 pm - 11:00 pm)</option>
+                                <option value="Turno Noche (11:00 pm - 07:00 am)">Turno Noche (11:00 pm - 07:00 am)</option>
+                                <option value="Turno Cortado / Rotativo (08:00 am - 05:00 pm)">Turno Cortado / Rotativo (08:00 am - 05:00 pm)</option>
+                                <option value="Turno Administrativo (08:30 am - 05:30 pm)">Turno Administrativo (08:30 am - 05:30 pm)</option>
+                                <option value="Turno Apoyo / Especial (06:00 am - 02:00 pm)">Turno Apoyo / Especial (06:00 am - 02:00 pm)</option>
+                                <option value="Turno Fin de Semana / Refuerzo (09:00 am - 06:00 pm)">Turno Fin de Semana / Refuerzo (09:00 am - 06:00 pm)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-6">
+                            <label class="small fw-bold text-muted mb-1">HORA ENTRADA</label>
+                            <input type="time" name="horaEntrada" id="inputHoraEntrada" class="form-control bg-light border-0 py-3" required style="border-radius: 15px;">
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-bold text-muted mb-1">HORA SALIDA</label>
+                            <input type="time" name="horaSalida" id="inputHoraSalida" class="form-control bg-light border-0 py-3" required style="border-radius: 15px;">
+                        </div>
+                        <div class="col-12">
+                            <label class="small fw-bold text-muted mb-1">TOLERANCIA (MINUTOS)</label>
+                            <input type="number" name="tolerancia" class="form-control bg-light border-0 py-3" value="15" required style="border-radius: 15px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow" style="border-radius: 15px;">Guardar Horario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script th:if="${error}">Swal.fire({ icon: 'error', title: 'Error', text: [[${error}]], confirmButtonColor: '#6366f1' });</script>
+    <script th:if="${success}">Swal.fire({ icon: 'success', title: 'Éxito', text: [[${success}]], confirmButtonColor: '#6366f1' });</script>
+
+    <script>
+        // Autocompleta automáticamente las horas de entrada y salida al seleccionar una opción
+        function autocompletarHoras() {
+            const val = document.getElementById('selectNombreHorario').value;
+            const inEntrada = document.getElementById('inputHoraEntrada');
+            const inSalida = document.getElementById('inputHoraSalida');
+
+            if (val.includes('Mañana')) { inEntrada.value = '07:00'; inSalida.value = '15:00'; }
+            else if (val.includes('Tarde')) { inEntrada.value = '15:00'; inSalida.value = '23:00'; }
+            else if (val.includes('Noche')) { inEntrada.value = '23:00'; inSalida.value = '07:00'; }
+            else if (val.includes('Cortado')) { inEntrada.value = '08:00'; inSalida.value = '17:00'; }
+            else if (val.includes('Administrativo')) { inEntrada.value = '08:30'; inSalida.value = '17:30'; }
+            else if (val.includes('Apoyo')) { inEntrada.value = '06:00'; inSalida.value = '14:00'; }
+            else if (val.includes('Fin de Semana')) { inEntrada.value = '09:00'; inSalida.value = '18:00'; }
+        }
+
+        document.querySelectorAll('.form-eliminar-horario').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: '¿Eliminar horario?',
+                    text: 'Esta acción no se puede deshacer.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6366f1',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+
+    <div th:replace="~{fragments/admin_layout :: admin-scripts}"></div>
+</body>
+</html>

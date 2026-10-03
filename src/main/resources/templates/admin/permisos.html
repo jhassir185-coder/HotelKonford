@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/admin_layout :: admin-head('Solicitudes')}"></head>
+<body>
+    <div th:replace="~{fragments/admin_layout :: admin-sidebar('permisos')}"></div>
+
+    <div class="content">
+        <div class="top-bar shadow-sm">
+            <button class="btn btn-light border-0 rounded-3" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+            <h6 class="mb-0 ms-3 fw-bold">Solicitudes Pendientes</h6>
+        </div>
+
+        <h3 class="fw-bold mb-4 d-none d-lg-block px-2">Gestión de Permisos</h3>
+
+        <!-- Estado Vacío -->
+        <div th:if="${#lists.isEmpty(permisos)}" class="text-center py-5 bg-white rounded-5 shadow-sm mt-5 mx-2">
+            <div class="mb-4 text-primary opacity-25"><i class="fas fa-mug-hot fa-4x"></i></div>
+            <h4 class="fw-bold">¡Todo al día!</h4>
+            <p class="text-muted">No hay solicitudes pendientes por el momento.</p>
+        </div>
+
+        <div class="row g-4 px-2">
+            <div th:each="p : ${permisos}" class="col-md-6 col-xl-4">
+                <div class="card card-custom p-4 h-100 shadow-sm border-0">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span th:class="${p.estado == 'PENDIENTE' ? 'badge bg-warning-subtle text-warning' : (p.estado == 'APROBADO' ? 'badge bg-success-subtle text-success' : 'badge bg-danger-subtle text-danger')}" th:text="${p.estado}" class="rounded-pill px-3 py-2"></span>
+                        <small class="text-muted" th:text="${#temporals.format(p.fechaSolicitud, 'dd/MM/yyyy HH:mm')}"></small>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <span class="badge bg-info-subtle text-info fw-semibold mb-1" th:text="${p.tipoPermiso}">SALUD</span>
+                        <h6 class="fw-bold mb-0" th:text="${p.empleado.nombreCompleto}"></h6>
+                        <small class="text-muted d-block" th:text="${p.empleado.cargo}"></small>
+                    </div>
+
+                    <div class="bg-light p-3 rounded-4 mb-3">
+                        <p class="mb-0 small text-dark">"<span th:text="${p.motivo}"></span>"</p>
+                    </div>
+
+                    <!-- Botón para ver/descargar comprobante si el trabajador adjuntó uno -->
+                    <div th:if="${p.comprobanteRuta}" class="mb-3">
+                        <a th:href="@{/uploads/permisos/{filename}(filename=${p.comprobanteRuta})}" 
+                           target="_blank" 
+                           class="btn btn-sm btn-outline-primary w-100 rounded-3 py-2 fw-semibold">
+                            <i class="fas fa-file-pdf me-2 text-danger"></i> Ver Sustento Adjunto
+                        </a>
+                    </div>
+                    <div th:if="${p.comprobanteRuta == null}" class="mb-3">
+                        <span class="text-muted small fst-italic"><i class="fas fa-info-circle me-1"></i> Sin documento adjunto</span>
+                    </div>
+
+                    <form th:if="${p.estado == 'PENDIENTE'}" th:action="@{/admin/permisos/responder}" method="post">
+                        <input type="hidden" name="id" th:value="${p.id}">
+                        <div class="mb-3">
+                            <input type="text" name="comentario" class="form-control border-0 bg-light py-2" placeholder="Respuesta o comentario..." required style="border-radius: 12px;">
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="accion" value="APROBADO" class="btn btn-success w-100 rounded-pill py-2 fw-bold shadow">Aprobar</button>
+                            <button type="submit" name="accion" value="RECHAZADO" class="btn btn-danger w-100 rounded-pill py-2 fw-bold shadow">Rechazar</button>
+                        </div>
+                    </form>
+                    
+                    <div th:if="${p.estado != 'PENDIENTE'}" class="mt-auto border-top pt-3">
+                        <small class="fw-bold d-block text-primary">Respuesta enviada:</small>
+                        <p class="small text-muted mb-0" th:text="${p.comentarioJefa}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{fragments/admin_layout :: admin-scripts}"></div>
+</body>
+</html>

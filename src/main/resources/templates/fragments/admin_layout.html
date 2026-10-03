@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="admin-head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' - Hotel Konford'">Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { --sidebar-bg: #0f172a; --sidebar-hover: #1e293b; --primary: #6366f1; --main-bg: #f1f5f9; }
+        body { background-color: var(--main-bg); font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
+        .sidebar { width: 280px; height: 100vh; background: var(--sidebar-bg); position: fixed; transition: all 0.3s; z-index: 1050; display: flex; flex-direction: column; }
+        .sidebar .brand { padding: 30px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sidebar .nav-link { color: #94a3b8; padding: 14px 25px; margin: 4px 15px; border-radius: 12px; transition: all 0.2s; font-weight: 500; display: flex; align-items: center; text-decoration: none; }
+        .sidebar .nav-link i { font-size: 1.2rem; margin-right: 12px; }
+        .sidebar .nav-link:hover { background: var(--sidebar-hover); color: white; }
+        .sidebar .nav-link.active { background: var(--primary); color: white; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3); }
+        .user-profile-side { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.2); display: flex; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); }
+        .avatar-mini { width: 40px; height: 40px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 12px; }
+        .content { margin-left: 280px; padding: 30px; transition: all 0.3s; }
+        .top-bar { background: white; padding: 15px 25px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; margin-bottom: 30px; border-radius: 18px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .card-custom { border: none; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); background: white; }
+        .stat-card { 
+            border: none; border-radius: 24px; padding: 25px; color: white; 
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); position: relative; 
+            overflow: hidden; transition: all 0.3s; min-height: 120px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+        @media (max-width: 992px) { .sidebar { margin-left: -280px; } .sidebar.active { margin-left: 0; } .content { margin-left: 0; padding: 15px; } }
+    </style>
+</head>
+
+<body>
+    <div th:fragment="admin-sidebar(activePage)" class="sidebar" id="sidebar">
+        <div class="brand"><h4 class="text-white fw-bold mb-0"><i class="fas fa-hotel me-2"></i> Konford</h4><small class="text-muted">Control System</small></div>
+        <nav class="nav flex-column mt-3">
+            <a th:classappend="${activePage == 'dashboard' ? 'active' : ''}" class="nav-link" href="/admin/dashboard"><i class="fas fa-grid-2"></i> Dashboard</a>
+            <a th:classappend="${activePage == 'empleados' ? 'active' : ''}" class="nav-link" href="/admin/empleados"><i class="fas fa-users"></i> Empleados</a>
+             <!-- 
+            <a th:classappend="${activePage == 'horarios' ? 'active' : ''}" class="nav-link" href="/admin/horarios"><i class="fas fa-clock"></i> Horarios</a>
+            <a th:classappend="${activePage == 'asistencias' ? 'active' : ''}" class="nav-link" href="/admin/asistencias"><i class="fas fa-calendar-days"></i> Asistencias</a>
+            <a th:classappend="${activePage == 'permisos' ? 'active' : ''}" class="nav-link" href="/admin/permisos"><i class="fas fa-envelope-open-text"></i> Permisos</a>
+           -->
+           </nav>
+        <div class="user-profile-side">
+            <div class="avatar-mini"><i class="fas fa-user-tie"></i></div>
+            <div class="text-white overflow-hidden">
+                <small class="d-block opacity-50" th:text="${session.usuarioLogueado != null} ? ${session.usuarioLogueado.rol} : 'Administrador'">Administrador</small>
+                <span class="fw-bold text-truncate d-block" style="max-width: 150px;" 
+                      th:text="${session.usuarioLogueado != null} ? ${session.usuarioLogueado.nombreCompleto} : 'Jefa de Hotel'">Nombre</span>
+            </div>
+            <a href="/" class="ms-auto text-danger opacity-75"><i class="fas fa-power-off"></i></a>
+        </div>
+    </div>
+
+    <div th:fragment="admin-scripts" th:remove="tag">
+        <script>function toggleSidebar(){document.getElementById('sidebar').classList.toggle('active');}</script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </div>
+</body>
+</html>
